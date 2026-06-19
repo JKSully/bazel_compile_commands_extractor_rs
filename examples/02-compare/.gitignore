@@ -1,0 +1,8 @@
+*.diff
+*.normalized.json
+local/compile_commands.json
+reference/compile_commands.json
+local/refresh_compile_commands.run
+reference/refresh_compile_commands.run
+local/.bazel-output-*
+reference/.bazel-output-*
