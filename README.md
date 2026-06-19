@@ -12,8 +12,8 @@ The repository exposes the same primary macro name as Hedron. In another Bzlmod 
 bazel_dep(name = "bazel_compile_commands", dev_dependency = True)
 git_override(
     module_name = "bazel_compile_commands",
-    commit = "TODO",
-    remote = "TODO",
+    commit = "345031860939558157a443098fb5f3fbc5dfdf8e",
+    remote = "https://github.com/JKSully/bazel_compile_commands_extractor_rs.git",
 )
 ```
 
