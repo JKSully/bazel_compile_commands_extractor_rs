@@ -1,0 +1,35 @@
+module(
+    name= "bazel-compile-commands-extractor-rs",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "rules_rust", version = "0.70.0")
+
+RUST_EDITION="2024"
+RUST_VERSION="1.85.0"
+
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = RUST_EDITION,
+    versions = [RUST_VERSION],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains(
+    "@rust_toolchains//:all",
+)
+
+crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+
+crate.spec(
+    package = "serde",
+    version = "=1.0.219",
+    features = ["derive"],
+)
+crate.spec(
+    package = "serde_json",
+    version = "=1.0.140",
+)
+crate.from_specs()
+use_repo(crate, "crates")

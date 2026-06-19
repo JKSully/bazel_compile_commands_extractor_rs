@@ -1,0 +1,42 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+load(":refresh_compile_commands.bzl", "refresh_compile_commands")
+
+filegroup(
+    name = "clippy_config",
+    srcs = ["clippy.toml"],
+)
+
+exports_files(["refresh_compile_commands.bzl"])
+
+rust_library(
+    name = "bazel_compile_commands_extractor",
+    srcs = ["src/lib.rs"],
+    crate_name = "bazel_compile_commands_extractor",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@crates//:serde",
+        "@crates//:serde_json",
+    ],
+)
+
+rust_binary(
+    name = "compile_commands_extractor",
+    srcs = ["src/main.rs"],
+    crate_root = "src/main.rs",
+    visibility = ["//visibility:public"],
+    deps = [":bazel_compile_commands_extractor"],
+)
+
+rust_test(
+    name = "extractor_test",
+    srcs = ["tests/extractor_test.rs"],
+    crate_root = "tests/extractor_test.rs",
+    deps = [
+        ":bazel_compile_commands_extractor",
+        "@crates//:serde_json",
+    ],
+)
+
+refresh_compile_commands(
+    name = "refresh_all",
+)

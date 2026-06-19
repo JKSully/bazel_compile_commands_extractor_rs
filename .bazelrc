@@ -1,0 +1,25 @@
+# Enable platform-specific config groups (e.g., "build:linux", "build:macos").
+common --enable_platform_specific_config
+
+# Default to debug build.
+build --compilation_mode=dbg
+
+# Disable stripping of debug symbols.
+build --strip=never
+
+# Default test options.
+build --test_output=errors
+build --test_summary=terse
+
+# Clippy
+build --aspects=@rules_rust//rust:defs.bzl%rust_clippy_aspect
+build --output_groups=+clippy_checks
+build --@rules_rust//rust/settings:clippy.toml=//:clippy_config
+
+# Rust fmt
+# build --aspects=@rules_rust//rust:defs.bzl%rustfmt_aspect
+# build --output_groups=+rustfmt_checks
+
+
+# Import user-specific configuration.
+try-import %workspace%/user.bazelrc
