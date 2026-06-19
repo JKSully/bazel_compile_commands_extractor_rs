@@ -102,7 +102,7 @@ fn excludes_external_source_actions_when_requested() {
 }
 
 #[test]
-fn parses_hedron_style_generated_arguments() {
+fn parses_generated_wrapper_arguments() {
     let config = parse_args([
         "--target".to_owned(),
         "//app:bin=--config=clang --cpu=k8".to_owned(),

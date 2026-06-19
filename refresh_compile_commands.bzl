@@ -1,8 +1,7 @@
-"""Hedron-compatible entrypoint for refreshing compile_commands.json.
+"""Entrypoint for refreshing compile_commands.json.
 
-This intentionally mirrors the public `refresh_compile_commands` macro shape from
-hedronvision/bazel-compile-commands-extractor while delegating the implementation to
-this repository's Rust binary.
+This file exposes the public `refresh_compile_commands` macro and delegates the
+implementation to this repository's Rust binary.
 """
 
 
@@ -17,7 +16,7 @@ def refresh_compile_commands(
 
     Args:
       name: Name of the generated runnable target.
-      targets: String, list, dict, select(), or None following Hedron's macro.
+      targets: String, list, dict, select(), or None.
       exclude_headers: None, "all", or "external".
       exclude_external_sources: Whether to omit compile actions from external repos.
       **kwargs: Common Bazel attributes forwarded to the generated executable.
@@ -32,14 +31,10 @@ def refresh_compile_commands(
         elif type(targets) != "dict":
             targets = {targets: ""}
 
-        labels_to_flags = {}
-        for item in targets.items():
-            target = item[0]
-            flags = item[1]
-            if target.startswith("/") or target.startswith("@"):
-                labels_to_flags[target] = flags
-            else:
-                labels_to_flags["{}//{}:{}".format(native.repository_name(), native.package_name(), target.removeprefix(":"))] = flags
+        labels_to_flags = {
+            target if target.startswith("/") or target.startswith("@") else "{}//{}:{}".format(native.repository_name(), native.package_name(), target.removeprefix(":")): flags
+            for target, flags in targets.items()
+        }
 
     _refresh_compile_commands_wrapper(
         name = name,
@@ -67,7 +62,14 @@ def _refresh_compile_commands_wrapper_impl(ctx):
         content = "\n".join([
             "#!/usr/bin/env bash",
             "set -euo pipefail",
-            "extractor=\"${{RUNFILES_DIR:-}}/{}\"".format(ctx.executable._extractor.short_path),
+            "runfiles_dir=\"${RUNFILES_DIR:-${0}.runfiles}\"",
+            "extractor=\"${{runfiles_dir}}/{}\"".format(ctx.executable._extractor.short_path),
+            "if [[ ! -x \"${extractor}\" ]]; then",
+            "  extractor=\"${{runfiles_dir}}/_main/{}\"".format(ctx.executable._extractor.short_path),
+            "fi",
+            "if [[ ! -x \"${extractor}\" ]]; then",
+            "  extractor=\"$(find \"${runfiles_dir}\" -type f -name compile_commands_extractor -perm -111 2>/dev/null | sort | head -n 1)\"",
+            "fi",
             "if [[ ! -x \"${extractor}\" ]]; then",
             "  echo 'Could not locate compile_commands_extractor in Bazel runfiles.' >&2",
             "  exit 1",

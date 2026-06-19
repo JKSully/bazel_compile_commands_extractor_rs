@@ -6,10 +6,31 @@ The goal is API compatibility with Hedron's public Bazel interface while moving 
 
 ## Current interface
 
-The repository exposes the same primary macro name as Hedron:
+The repository exposes the same primary macro name as Hedron. In another Bzlmod workspace, depend on this module and override it to your local checkout while developing:
 
 ```starlark
-load("@bazel_compile_commands_extractor_rs//:refresh_compile_commands.bzl", "refresh_compile_commands")
+bazel_dep(name = "bazel_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "bazel_compile_commands",
+    commit = "TODO",
+    remote = "TODO",
+)
+```
+
+For the included `examples/01-bzlmod` workspace, the override points to the root of the repository:
+
+```starlark
+bazel_dep(name = "bazel_compile_commands", dev_dependency = True)
+local_path_override(
+    module_name = "bazel_compile_commands",
+    path = "../../",
+)
+```
+
+Then load the macro:
+
+```starlark
+load("@bazel_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 
 refresh_compile_commands(
     name = "refresh_compile_commands",
@@ -55,4 +76,5 @@ Use Bazel for validation:
 ```sh
 bazel test //:extractor_test
 bazel build //:compile_commands_extractor
+bazel build //:refresh_all
 ```
