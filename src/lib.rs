@@ -110,6 +110,12 @@ pub struct AqueryOutput {
     pub actions: Vec<Action>,
     #[serde(default)]
     pub targets: Vec<Target>,
+    #[serde(default)]
+    pub artifacts: Vec<Artifact>,
+    #[serde(default)]
+    pub dep_set_of_files: Vec<DepSetOfFiles>,
+    #[serde(default)]
+    pub path_fragments: Vec<PathFragment>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -121,6 +127,8 @@ pub struct Action {
     pub arguments: Vec<String>,
     #[serde(default)]
     pub environment_variables: Vec<EnvironmentVariable>,
+    #[serde(default)]
+    pub input_dep_set_ids: Vec<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -128,6 +136,33 @@ pub struct Action {
 pub struct Target {
     pub id: u32,
     pub label: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Artifact {
+    pub id: u32,
+    pub path_fragment_id: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DepSetOfFiles {
+    pub id: u32,
+    #[serde(default)]
+    pub direct_artifact_ids: Vec<u32>,
+    #[serde(default)]
+    pub transitive_dep_set_ids: Vec<u32>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PathFragment {
+    pub id: u32,
+    #[serde(default)]
+    pub label: String,
+    #[serde(default)]
+    pub parent_id: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -226,6 +261,12 @@ pub fn convert_compile_commands(
         .iter()
         .map(|target| (target.id, target.label.as_str()))
         .collect::<BTreeMap<_, _>>();
+    let artifact_paths = artifact_paths_by_id(aquery_output);
+    let dep_sets_by_id = aquery_output
+        .dep_set_of_files
+        .iter()
+        .map(|dep_set| (dep_set.id, dep_set))
+        .collect::<BTreeMap<_, _>>();
     let directory = workspace.to_string_lossy().into_owned();
     let mut commands = Vec::new();
     let mut headers_written = BTreeSet::new();
@@ -235,8 +276,11 @@ pub fn convert_compile_commands(
             continue;
         }
 
+        let input_paths = action_input_paths(action, &dep_sets_by_id, &artifact_paths);
         let files = get_files(
             action,
+            workspace,
+            &input_paths,
             exclude_headers,
             action_is_external(action, &labels_by_target_id),
         );
@@ -310,7 +354,6 @@ fn build_aquery_command(config: &ExtractorConfig, target_spec: &TargetSpec) -> V
             target_statement(&target_spec.target, config.exclude_external_sources)
         ),
         "--output=jsonproto".to_owned(),
-        "--include_artifacts=false".to_owned(),
         "--ui_event_filters=-info".to_owned(),
         "--noshow_progress".to_owned(),
         "--features=-compiler_param_file".to_owned(),
@@ -340,13 +383,99 @@ fn split_flags(flags: &str) -> Vec<String> {
         .collect()
 }
 
+fn artifact_paths_by_id(aquery_output: &AqueryOutput) -> BTreeMap<u32, String> {
+    let path_fragments = aquery_output
+        .path_fragments
+        .iter()
+        .map(|fragment| (fragment.id, fragment))
+        .collect::<BTreeMap<_, _>>();
+
+    aquery_output
+        .artifacts
+        .iter()
+        .filter_map(|artifact| {
+            path_from_fragment(artifact.path_fragment_id, &path_fragments)
+                .map(|path| (artifact.id, path))
+        })
+        .collect()
+}
+
+fn path_from_fragment(id: u32, path_fragments: &BTreeMap<u32, &PathFragment>) -> Option<String> {
+    let mut labels = Vec::new();
+    let mut current_id = Some(id);
+
+    while let Some(fragment_id) = current_id {
+        let fragment = path_fragments.get(&fragment_id)?;
+        if !fragment.label.is_empty() {
+            labels.push(fragment.label.as_str());
+        }
+        current_id = fragment.parent_id;
+    }
+
+    labels.reverse();
+    Some(labels.join("/"))
+}
+
+fn action_input_paths(
+    action: &Action,
+    dep_sets_by_id: &BTreeMap<u32, &DepSetOfFiles>,
+    artifact_paths: &BTreeMap<u32, String>,
+) -> Vec<String> {
+    let mut artifact_ids = BTreeSet::new();
+    let mut visited_dep_sets = BTreeSet::new();
+    for dep_set_id in &action.input_dep_set_ids {
+        collect_artifact_ids(
+            *dep_set_id,
+            dep_sets_by_id,
+            &mut visited_dep_sets,
+            &mut artifact_ids,
+        );
+    }
+
+    artifact_ids
+        .iter()
+        .filter_map(|artifact_id| artifact_paths.get(artifact_id).cloned())
+        .collect()
+}
+
+fn collect_artifact_ids(
+    dep_set_id: u32,
+    dep_sets_by_id: &BTreeMap<u32, &DepSetOfFiles>,
+    visited_dep_sets: &mut BTreeSet<u32>,
+    artifact_ids: &mut BTreeSet<u32>,
+) {
+    if !visited_dep_sets.insert(dep_set_id) {
+        return;
+    }
+
+    let Some(dep_set) = dep_sets_by_id.get(&dep_set_id) else {
+        return;
+    };
+
+    artifact_ids.extend(dep_set.direct_artifact_ids.iter().copied());
+    for transitive_dep_set_id in &dep_set.transitive_dep_set_ids {
+        collect_artifact_ids(
+            *transitive_dep_set_id,
+            dep_sets_by_id,
+            visited_dep_sets,
+            artifact_ids,
+        );
+    }
+}
+
 #[derive(Debug, Default)]
 struct Files {
     sources: Vec<String>,
     headers: Vec<String>,
 }
 
-fn get_files(action: &Action, exclude_headers: &ExcludeHeaders, external_action: bool) -> Files {
+fn get_files(
+    action: &Action,
+    workspace: &Path,
+    input_paths: &[String],
+    exclude_headers: &ExcludeHeaders,
+    external_action: bool,
+) -> Files {
     let mut files = Files::default();
     let mut skip_next = false;
 
@@ -367,9 +496,45 @@ fn get_files(action: &Action, exclude_headers: &ExcludeHeaders, external_action:
 
         if is_source_file(path) {
             files.sources.push(path.to_owned());
-        } else if should_include_header(path, exclude_headers, external_action) {
-            files.headers.push(path.to_owned());
+        } else {
+            maybe_push_header(
+                workspace,
+                path,
+                exclude_headers,
+                external_action,
+                &mut files.headers,
+            );
         }
+    }
+
+    for path in input_paths {
+        if is_source_file(path) {
+            files.sources.push(path.to_owned());
+        } else {
+            maybe_push_header(
+                workspace,
+                path,
+                exclude_headers,
+                external_action,
+                &mut files.headers,
+            );
+        }
+    }
+
+    if exclude_headers != &ExcludeHeaders::All {
+        let include_directories = include_directories(&action.arguments);
+        let mut discovered_headers = BTreeSet::new();
+        for source in &files.sources {
+            discover_headers_for_source(
+                workspace,
+                source,
+                &include_directories,
+                exclude_headers,
+                external_action,
+                &mut discovered_headers,
+            );
+        }
+        files.headers.extend(discovered_headers);
     }
 
     files.sources.sort();
@@ -377,6 +542,238 @@ fn get_files(action: &Action, exclude_headers: &ExcludeHeaders, external_action:
     files.headers.sort();
     files.headers.dedup();
     files
+}
+
+fn maybe_push_header(
+    workspace: &Path,
+    path: &str,
+    exclude_headers: &ExcludeHeaders,
+    external_action: bool,
+    headers: &mut Vec<String>,
+) {
+    let header = header_path_to_emit(workspace, path);
+    if should_include_header(&header, exclude_headers, external_action) {
+        headers.push(header);
+    }
+}
+
+fn header_path_to_emit(workspace: &Path, path: &str) -> String {
+    let Some(suffix) = virtual_include_suffix(path) else {
+        return path.to_owned();
+    };
+    find_workspace_header_by_suffix(workspace, suffix).unwrap_or_else(|| path.to_owned())
+}
+
+fn virtual_include_suffix(path: &str) -> Option<&str> {
+    let (_, after_virtual_includes) = path.split_once("/_virtual_includes/")?;
+    let (_, suffix) = after_virtual_includes.split_once('/')?;
+    Some(suffix)
+}
+
+fn find_workspace_header_by_suffix(workspace: &Path, suffix: &str) -> Option<String> {
+    if !is_header_file(suffix) {
+        return None;
+    }
+    let suffix = Path::new(suffix);
+    find_workspace_header_by_suffix_from(workspace, workspace, suffix)
+}
+
+fn find_workspace_header_by_suffix_from(
+    workspace: &Path,
+    directory: &Path,
+    suffix: &Path,
+) -> Option<String> {
+    let entries = fs::read_dir(directory).ok()?;
+    for entry in entries.filter_map(Result::ok) {
+        let path = entry.path();
+        if path.is_dir() {
+            if should_skip_header_search_directory(&path) {
+                continue;
+            }
+            if let Some(header) = find_workspace_header_by_suffix_from(workspace, &path, suffix) {
+                return Some(header);
+            }
+        } else if path.ends_with(suffix) {
+            if let Some(header) = path_to_workspace_relative(workspace, &path) {
+                return Some(header);
+            }
+        }
+    }
+    None
+}
+
+fn should_skip_header_search_directory(path: &Path) -> bool {
+    path.file_name()
+        .and_then(OsStr::to_str)
+        .is_some_and(|name| {
+            matches!(
+                name,
+                "bazel-bin" | "bazel-out" | "bazel-testlogs" | "bazel-local"
+            )
+        })
+}
+
+fn include_directories(arguments: &[String]) -> Vec<String> {
+    let mut directories = vec![".".to_owned()];
+    let mut iterator = arguments.iter();
+
+    while let Some(argument) = iterator.next() {
+        match argument.as_str() {
+            "-I" | "-iquote" | "-isystem" | "-idirafter" => {
+                if let Some(directory) = iterator.next() {
+                    directories.push(directory.to_owned());
+                }
+            }
+            _ if argument.starts_with("-I") && argument.len() > 2 => {
+                directories.push(argument[2..].to_owned());
+            }
+            _ if argument.starts_with("-iquote") && argument.len() > "-iquote".len() => {
+                directories.push(argument["-iquote".len()..].to_owned());
+            }
+            _ if argument.starts_with("-isystem") && argument.len() > "-isystem".len() => {
+                directories.push(argument["-isystem".len()..].to_owned());
+            }
+            _ if argument.starts_with("-idirafter") && argument.len() > "-idirafter".len() => {
+                directories.push(argument["-idirafter".len()..].to_owned());
+            }
+            _ => {}
+        }
+    }
+
+    directories.sort();
+    directories.dedup();
+    directories
+}
+
+fn discover_headers_for_source(
+    workspace: &Path,
+    source: &str,
+    include_directories: &[String],
+    exclude_headers: &ExcludeHeaders,
+    external_action: bool,
+    discovered_headers: &mut BTreeSet<String>,
+) {
+    let source_path = workspace.join(source);
+    let Some(source_directory) = Path::new(source).parent() else {
+        return;
+    };
+    let mut include_roots = vec![source_directory.to_path_buf()];
+    include_roots.extend(include_directories.iter().map(PathBuf::from));
+
+    discover_headers_from_file(
+        workspace,
+        &source_path,
+        &include_roots,
+        exclude_headers,
+        external_action,
+        discovered_headers,
+    );
+}
+
+fn discover_headers_from_file(
+    workspace: &Path,
+    file: &Path,
+    include_roots: &[PathBuf],
+    exclude_headers: &ExcludeHeaders,
+    external_action: bool,
+    discovered_headers: &mut BTreeSet<String>,
+) {
+    let Ok(contents) = fs::read_to_string(file) else {
+        return;
+    };
+
+    let mut file_include_roots = Vec::new();
+    if let Some(parent) = path_to_workspace_path(workspace, file)
+        .and_then(|path| path.parent().map(Path::to_path_buf))
+    {
+        file_include_roots.push(parent);
+    }
+    file_include_roots.extend(include_roots.iter().cloned());
+
+    for include in contents.lines().filter_map(parse_include) {
+        let Some(header) = resolve_include(workspace, include, &file_include_roots) else {
+            continue;
+        };
+        let header = header_path_to_emit(workspace, &header);
+        if !should_include_header(&header, exclude_headers, external_action) {
+            continue;
+        }
+        if discovered_headers.insert(header.clone()) {
+            discover_headers_from_file(
+                workspace,
+                &workspace.join(&header),
+                include_roots,
+                exclude_headers,
+                external_action,
+                discovered_headers,
+            );
+        }
+    }
+}
+
+fn parse_include(line: &str) -> Option<&str> {
+    let line = line.trim_start();
+    let line = line.strip_prefix('#')?.trim_start();
+    let line = line.strip_prefix("include")?.trim_start();
+    let include = line
+        .strip_prefix('"')
+        .and_then(|rest| rest.split_once('"').map(|(include, _)| include))
+        .or_else(|| {
+            line.strip_prefix('<')
+                .and_then(|rest| rest.split_once('>').map(|(include, _)| include))
+        })?;
+    if include.is_empty() {
+        None
+    } else {
+        Some(include)
+    }
+}
+
+fn resolve_include(workspace: &Path, include: &str, include_roots: &[PathBuf]) -> Option<String> {
+    for root in include_roots {
+        let candidate = root.join(include);
+        let candidate = normalize_relative_path(&candidate);
+        let workspace_candidate = if candidate.is_absolute() {
+            candidate.clone()
+        } else {
+            workspace.join(&candidate)
+        };
+        if !workspace_candidate.is_file() {
+            continue;
+        }
+        if let Some(relative) = path_to_workspace_relative(workspace, &workspace_candidate) {
+            return Some(relative);
+        }
+        if !candidate.is_absolute() {
+            return candidate.to_str().map(ToOwned::to_owned);
+        }
+    }
+    None
+}
+
+fn path_to_workspace_relative(workspace: &Path, path: &Path) -> Option<String> {
+    path.strip_prefix(workspace)
+        .ok()
+        .and_then(|relative| relative.to_str())
+        .map(ToOwned::to_owned)
+}
+
+fn path_to_workspace_path(workspace: &Path, path: &Path) -> Option<PathBuf> {
+    path.strip_prefix(workspace).ok().map(Path::to_path_buf)
+}
+
+fn normalize_relative_path(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                normalized.pop();
+            }
+            _ => normalized.push(component.as_os_str()),
+        }
+    }
+    normalized
 }
 
 fn plausible_file_argument(argument: &str) -> Option<&str> {
