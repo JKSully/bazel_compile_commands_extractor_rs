@@ -8,6 +8,11 @@ filegroup(
 
 exports_files(["refresh_compile_commands.bzl"])
 
+alias(
+    name = "gen_rust_project",
+    actual = "@rules_rust//tools/rust_analyzer:gen_rust_project",
+)
+
 rust_library(
     name = "bazel_compile_commands_extractor",
     srcs = ["src/lib.rs"],
