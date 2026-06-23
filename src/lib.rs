@@ -506,7 +506,7 @@ fn ensure_gitignore_entries_exist(workspace: &Path) -> Result<(), ExtractorError
             return Err(ExtractorError::Io {
                 context: format!("failed to read {}", gitignore.display()),
                 source,
-            })
+            });
         }
     };
 
