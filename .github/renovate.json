@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "automerge": false,
-  "timezone": "UTC",
-  "schedule": ["* * 1 * *"],
+  "timezone": "America/New_York",
+  "schedule": ["* 0-9 * * 3"], // every wednesday before 9am
   "enabledManagers": ["bazelisk", "bazel-module"]
 }
