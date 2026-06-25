@@ -24,7 +24,7 @@ crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
 
 crate.spec(
     package = "serde",
-    version = "=1.0.219",
+    version = "=1.0.228",
     features = ["derive"],
 )
 crate.spec(
