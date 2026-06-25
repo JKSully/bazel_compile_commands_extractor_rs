@@ -1,17 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": ["config:recommended"],
   "timezone": "UTC",
+  "enabledManagers": ["bazelisk", "bazel-module", "custom.regex"],
   "regexManagers": [
-    {
-      "fileMatch": ["^MODULE\\.bazel$"],
-      "matchStrings": [
-        "bazel_dep\\(\\s*name\\s*=\\s*\"(?<depName>[^\"]+)\",\\s*version\\s*=\\s*\"(?<currentValue>[^\"]+)\"\\s*\\)"
-      ],
-      "datasourceTemplate": "github-tags",
-      "depNameTemplate": "bazelbuild/{{{depName}}}",
-      "versioningTemplate": "semver"
-    },
     {
       "fileMatch": ["^MODULE\\.bazel$"],
       "matchStrings": [
