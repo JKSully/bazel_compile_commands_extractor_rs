@@ -6,3 +6,4 @@ local/refresh_compile_commands.run
 reference/refresh_compile_commands.run
 local/.bazel-output-*
 reference/.bazel-output-*
+__pycache__

@@ -2,3 +2,5 @@
 /compile_commands.json
 /external
 rust-project.json
+/MODULE.bazel.lock
+/user.bazelrc

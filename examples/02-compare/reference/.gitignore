@@ -1,5 +1,6 @@
-compile_commands.json
-refresh_compile_commands.run
-bazel-*
+/compile_commands.json
+/refresh_compile_commands.run
+/bazel-*
 .cache/
-external/
+/external
+/MODULE.bazel.lock
