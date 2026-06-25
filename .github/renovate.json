@@ -1,17 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
+  "automerge": false,
   "timezone": "UTC",
-  "enabledManagers": ["bazelisk", "bazel-module", "custom.regex"],
-  "regexManagers": [
-    {
-      "fileMatch": ["^MODULE\\.bazel$"],
-      "matchStrings": [
-        "crate\\.spec\\(\\s*package\\s*=\\s*\"(?<depName>[^\"]+)\"[\\s\\S]*?version\\s*=\\s*\"(?:=)?(?<currentValue>[^\"]+)\""
-      ],
-      "datasourceTemplate": "crates-io",
-      "depNameTemplate": "{{{depName}}}",
-      "versioningTemplate": "semver"
-    }
-  ]
+  "schedule": ["* * 1 * *"],
+  "enabledManagers": ["bazelisk", "bazel-module"]
 }
