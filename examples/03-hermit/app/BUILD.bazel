@@ -1,0 +1,13 @@
+load("@bazel_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+
+cc_binary(
+    name = "hermit",
+    srcs = ["main.cc"],
+)
+
+refresh_compile_commands(
+    name = "refresh_compile_commands",
+    targets = ":hermit",
+    exclude_external_sources = True,
+)
