@@ -3,7 +3,7 @@ module(
     version = "0.0.0",
 )
 
-bazel_dep(name = "rules_rust", version = "0.70.0")
+bazel_dep(name = "rules_rust", version = "0.71.1")
 
 RUST_EDITION="2024"
 RUST_VERSION="1.85.0"
@@ -20,7 +20,7 @@ register_toolchains(
     "@rust_toolchains//:all",
 )
 
-crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 
 crate.spec(
     package = "serde",

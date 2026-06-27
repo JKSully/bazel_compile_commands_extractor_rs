@@ -556,7 +556,7 @@ fn ensure_external_workspaces_link_exists(workspace: &Path) -> Result<(), Extrac
 
     let execution_root = String::from_utf8_lossy(&execution_root.stdout);
     let external_source = Path::new(execution_root.trim()).join("external");
-    symlink_directory(&external_source, &external)
+    symlink_directory(external_source.as_path(), external.as_path())
 }
 
 #[cfg(unix)]
