@@ -1,9 +1,9 @@
-use bazel_compile_commands_extractor::convert_compile_commands;
-use bazel_compile_commands_extractor::parse_args;
-use bazel_compile_commands_extractor::AqueryOutput;
-use bazel_compile_commands_extractor::ExcludeHeaders;
-use bazel_compile_commands_extractor::ExtractorConfig;
-use bazel_compile_commands_extractor::TargetSpec;
+use bazel_compile_commands::convert_compile_commands;
+use bazel_compile_commands::parse_args;
+use bazel_compile_commands::AqueryOutput;
+use bazel_compile_commands::ExcludeHeaders;
+use bazel_compile_commands::ExtractorConfig;
+use bazel_compile_commands::TargetSpec;
 use std::path::Path;
 
 #[test]

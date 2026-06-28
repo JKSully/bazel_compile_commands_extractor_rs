@@ -1,5 +1,5 @@
-use bazel_compile_commands_extractor::parse_args;
-use bazel_compile_commands_extractor::run;
+use bazel_compile_commands::parse_args;
+use bazel_compile_commands::run;
 use std::env;
 use std::process::ExitCode;
 

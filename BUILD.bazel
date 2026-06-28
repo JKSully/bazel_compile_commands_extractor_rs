@@ -1,5 +1,6 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
 load(":refresh_compile_commands.bzl", "refresh_compile_commands")
+load("@crates//:defs.bzl", "all_crate_deps")
 
 filegroup(
     name = "clippy_config",
@@ -16,26 +17,24 @@ alias(
 rust_library(
     name = "bazel_compile_commands_extractor",
     srcs = ["src/lib.rs"],
-    crate_name = "bazel_compile_commands_extractor",
-    visibility = ["//visibility:public"],
-    deps = [
-        "@crates//:serde",
-        "@crates//:serde_json",
-    ],
+    deps = all_crate_deps(normal = True),
 )
 
 rust_binary(
     name = "compile_commands_extractor",
     srcs = ["src/main.rs"],
-    crate_root = "src/main.rs",
-    visibility = ["//visibility:public"],
+    aliases = {
+        ":bazel_compile_commands_extractor": "bazel_compile_commands",
+    },
     deps = [":bazel_compile_commands_extractor"],
 )
 
 rust_test(
     name = "extractor_test",
     srcs = ["tests/extractor_test.rs"],
-    crate_root = "tests/extractor_test.rs",
+    aliases = {
+        ":bazel_compile_commands_extractor": "bazel_compile_commands",
+    },
     deps = [
         ":bazel_compile_commands_extractor",
         "@crates//:serde_json",
