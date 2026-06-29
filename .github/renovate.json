@@ -4,7 +4,13 @@
   "automerge": false,
   "timezone": "America/New_York",
   "schedule": ["* 0-9 * * 3"], // every wednesday before 9am
-  "enabledManagers": ["bazelisk", "bazel-module", "pre-commit"],
+  "enabledManagers": [
+    "bazelisk",
+    "bazel-module",
+    "pre-commit",
+    "cargo",
+    "github-actions"
+  ],
   "pre-commit": {
     "enabled": true
   }
