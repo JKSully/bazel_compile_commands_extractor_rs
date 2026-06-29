@@ -1,12 +1,7 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
 load(":refresh_compile_commands.bzl", "refresh_compile_commands")
 
-filegroup(
-    name = "clippy_config",
-    srcs = ["clippy.toml"],
-)
-
-exports_files(["refresh_compile_commands.bzl"])
+exports_files(["refresh_compile_commands.bzl", "clippy.toml"])
 
 alias(
     name = "gen_rust_project",

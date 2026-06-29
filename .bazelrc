@@ -14,7 +14,7 @@ build --test_summary=terse
 # Clippy
 build --aspects=@rules_rust//rust:defs.bzl%rust_clippy_aspect
 build --output_groups=+clippy_checks
-build --@rules_rust//rust/settings:clippy.toml=//:clippy_config
+build --@rules_rust//rust/settings:clippy.toml=//:clippy.toml
 
 # Rust fmt
 # build --aspects=@rules_rust//rust:defs.bzl%rustfmt_aspect
