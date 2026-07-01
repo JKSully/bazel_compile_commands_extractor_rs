@@ -29,7 +29,7 @@ crate.spec(
 )
 crate.spec(
     package = "serde_json",
-    version = "=1.0.140",
+    version = "=1.0.150",
 )
 crate.from_specs()
 use_repo(crate, "crates")
