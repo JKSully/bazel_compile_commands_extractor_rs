@@ -3,7 +3,7 @@ module(
     version = "0.0.0",
 )
 
-bazel_dep(name = "rules_rust", version = "0.71.1")
+bazel_dep(name = "rules_rust", version = "0.71.2")
 
 RUST_EDITION="2024"
 RUST_VERSION="1.85.0"
