@@ -1,9 +1,9 @@
-use bazel_compile_commands_extractor::convert_compile_commands;
-use bazel_compile_commands_extractor::parse_args;
 use bazel_compile_commands_extractor::AqueryOutput;
 use bazel_compile_commands_extractor::ExcludeHeaders;
 use bazel_compile_commands_extractor::ExtractorConfig;
 use bazel_compile_commands_extractor::TargetSpec;
+use bazel_compile_commands_extractor::convert_compile_commands;
+use bazel_compile_commands_extractor::parse_args;
 use std::path::Path;
 
 #[test]
@@ -63,13 +63,17 @@ fn converts_aquery_compile_actions_to_compile_commands() {
             "external/dep/dep.cc"
         ]
     );
-    assert!(commands[0]
-        .arguments
-        .iter()
-        .all(|argument| argument != "-fno-canonical-system-headers"));
-    assert!(commands
-        .iter()
-        .all(|command| command.directory == "/workspace"));
+    assert!(
+        commands[0]
+            .arguments
+            .iter()
+            .all(|argument| argument != "-fno-canonical-system-headers")
+    );
+    assert!(
+        commands
+            .iter()
+            .all(|command| command.directory == "/workspace")
+    );
 }
 
 #[test]
