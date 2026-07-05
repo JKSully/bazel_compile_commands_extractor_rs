@@ -1,44 +1,30 @@
 # Bazel Compile Commands Extractor (Rust)
 
-A Rust/Bazel reimplementation of [Hedron's Bazel compile commands extractor](https://github.com/hedronvision/bazel-compile-commands-extractor).
+A Rust/Bazel reimplementation of [Hedronvision Bazel compile commands extractor](https://github.com/hedronvision/bazel-compile-commands-extractor).
 
 The goal is API compatibility with Hedron's public Bazel interface while moving the implementation into a Rust binary built by Bazel.
 
 ## Current interface
 
-The repository exposes the same primary macro name as Hedron. In another Bzlmod workspace, depend on this module and override it to your local checkout while developing:
+The repository exposes the same primary macro name as Hedron. In your `MODULE.bazel`, depend on this module.
 
 ```starlark
 bazel_dep(name = "bazel_compile_commands", dev_dependency = True)
 git_override(
     module_name = "bazel_compile_commands",
-    commit = "345031860939558157a443098fb5f3fbc5dfdf8e",
+    commit = "d1febb8a41134a84fce6b4d1e0957ce0e0eb1122",
     remote = "https://github.com/JKSully/bazel_compile_commands_extractor_rs.git",
 )
 ```
 
-For the included `examples/01-bzlmod` workspace, the override points to the root of the repository:
-
-```starlark
-bazel_dep(name = "bazel_compile_commands", dev_dependency = True)
-local_path_override(
-    module_name = "bazel_compile_commands",
-    path = "../../",
-)
-```
-
-Then load the macro:
+Then load the macro in `BUILD.bazel`:
 
 ```starlark
 load("@bazel_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 
 refresh_compile_commands(
     name = "refresh_compile_commands",
-    targets = {
-        "//:my_binary": "--config=clang",
-    },
-    exclude_headers = "external",
-    exclude_external_sources = True,
+    targets = "all",
 )
 ```
 
@@ -71,10 +57,9 @@ Remaining deeper Hedron parity work includes platform-specific command patching 
 
 ## Development
 
-Use Bazel for validation:
+Provided are example C-family Bazel targets in `examples/` for testing.
 
-```sh
-bazel test //:extractor_test
-bazel build //:compile_commands_extractor
-bazel build //:refresh_all
-```
+### Examples
+
+- **examples/01-bzlmod**: a simple Bzlmod-based workspace with a single C++ target.
+- **examples/02-compare**: a comparison between the output of this extractor and Hedron's native `compile_commands.json` generation. This example demonstrates the extractor's output parity with Hedron's native `compile_commands.json` generation, and thus is not intended to match Hedron's native behavior exactly.
