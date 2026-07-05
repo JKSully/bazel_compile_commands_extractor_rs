@@ -1,6 +1,6 @@
 # Bazel Compile Commands Extractor (Rust)
 
-A Rust/Bazel reimplementation of [Hedronvision's Bazel compile commands extractor](https://github.com/hedronvision/bazel-compile-commands-extractor).
+A Rust/Bazel reimplementation of [Hedronvision Bazel compile commands extractor](https://github.com/hedronvision/bazel-compile-commands-extractor).
 
 The goal is API compatibility with Hedron's public Bazel interface while moving the implementation into a Rust binary built by Bazel.
 
@@ -12,7 +12,7 @@ The repository exposes the same primary macro name as Hedron. In your `MODULE.ba
 bazel_dep(name = "bazel_compile_commands", dev_dependency = True)
 git_override(
     module_name = "bazel_compile_commands",
-    commit = "16fe90e4e9183ed41e36d89736bc08d164c378d0",
+    commit = "d1febb8a41134a84fce6b4d1e0957ce0e0eb1122",
     remote = "https://github.com/JKSully/bazel_compile_commands_extractor_rs.git",
 )
 ```
@@ -57,10 +57,9 @@ Remaining deeper Hedron parity work includes platform-specific command patching 
 
 ## Development
 
-Use Bazel for validation:
+Provided are example C-family Bazel targets in `examples/` for testing.
 
-```sh
-bazel test //:extractor_test
-bazel build //:compile_commands_extractor
-bazel build //:refresh_all
-```
+### Examples
+
+- **examples/01-bzlmod**: a simple Bzlmod-based workspace with a single C++ target.
+- **examples/02-compare**: a comparison between the output of this extractor and Hedron's native `compile_commands.json` generation. This example demonstrates the extractor's output parity with Hedron's native `compile_commands.json` generation, and thus is not intended to match Hedron's native behavior exactly.
