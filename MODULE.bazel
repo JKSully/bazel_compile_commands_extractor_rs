@@ -6,16 +6,15 @@ module(
 bazel_dep(name = "rules_rs", version = "0.0.94")
 bazel_dep(name = "llvm", version = "0.8.11")
 
-RUST_EDITION="2024"
-RUST_VERSION="1.85.0"
-
-
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 toolchains.toolchain(
-    edition = RUST_EDITION,
-    version = RUST_VERSION,
+    edition = "2024",
+    version = "1.85.0",
 )
 use_repo(toolchains, "default_rust_toolchains")
+
+rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
+use_repo(rules_rust, "rules_rust")
 
 register_toolchains(
     "@default_rust_toolchains//:all",
