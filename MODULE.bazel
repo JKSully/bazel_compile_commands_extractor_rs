@@ -24,12 +24,15 @@ crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 
 crate.spec(
     package = "serde",
-    version = "=1.0.228",
+    version = "1.0.228",
     features = ["derive"],
 )
 crate.spec(
     package = "serde_json",
-    version = "=1.0.150",
+    version = "1.0.150",
 )
-crate.from_specs()
+crate.from_specs(
+    cargo_lockfile = "//:Cargo.bazel.lock",
+    lockfile = "//:cargo-bazel-lock.json",
+)
 use_repo(crate, "crates")
