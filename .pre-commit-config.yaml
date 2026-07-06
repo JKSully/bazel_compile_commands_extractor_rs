@@ -10,6 +10,6 @@ repos:
     hooks:
       - id: rustfmt
         name: rustfmt
-        entry: bazel run @rules_rust//tools/rustfmt:target_aware_rustfmt
+        entry: rustfmt
         language: system
         types: [rust]
