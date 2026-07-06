@@ -1,12 +1,9 @@
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+load("@rules_rs//rs:rust_binary.bzl", "rust_binary")
+load("@rules_rs//rs:rust_library.bzl", "rust_library")
+load("@rules_rs//rs:rust_test.bzl", "rust_test")
 load(":refresh_compile_commands.bzl", "refresh_compile_commands")
 
 exports_files(["refresh_compile_commands.bzl", "clippy.toml"])
-
-alias(
-    name = "gen_rust_project",
-    actual = "@rules_rust//tools/rust_analyzer:gen_rust_project",
-)
 
 rust_library(
     name = "bazel_compile_commands_extractor",
