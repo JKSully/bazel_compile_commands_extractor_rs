@@ -538,25 +538,49 @@ fn ensure_gitignore_entries_exist(workspace: &Path) -> Result<(), ExtractorError
 
 fn ensure_external_workspaces_link_exists(workspace: &Path) -> Result<(), ExtractorError> {
     let external = workspace.join("external");
-    if external.exists() {
-        return Ok(());
-    }
-
-    let execution_root = Command::new("bazel")
-        .args(["info", "execution_root"])
+    let output_base = Command::new("bazel")
+        .args(["info", "output_base"])
         .output()
         .map_err(|source| ExtractorError::Io {
-            context: "failed to execute `bazel info execution_root`".to_owned(),
+            context: "failed to execute `bazel info output_base`".to_owned(),
             source,
         })?;
 
-    if !execution_root.status.success() {
+    if !output_base.status.success() {
         return Ok(());
     }
 
-    let execution_root = String::from_utf8_lossy(&execution_root.stdout);
-    let external_source = Path::new(execution_root.trim()).join("external");
-    symlink_directory(external_source.as_path(), external.as_path())
+    let external_source = external_workspace_source(&String::from_utf8_lossy(&output_base.stdout));
+    ensure_symlink_directory(external_source.as_path(), external.as_path())
+}
+
+#[doc(hidden)]
+pub fn external_workspace_source(output_base: &str) -> PathBuf {
+    Path::new(output_base.trim()).join("external")
+}
+
+fn ensure_symlink_directory(source: &Path, destination: &Path) -> Result<(), ExtractorError> {
+    match fs::symlink_metadata(destination) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            if fs::read_link(destination).is_ok_and(|existing_source| existing_source == source) {
+                return Ok(());
+            }
+            fs::remove_file(destination).map_err(|source| ExtractorError::Io {
+                context: format!("failed to remove stale symlink {}", destination.display()),
+                source,
+            })?;
+        }
+        Ok(_) => return Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(source) => {
+            return Err(ExtractorError::Io {
+                context: format!("failed to inspect {}", destination.display()),
+                source,
+            });
+        }
+    }
+
+    symlink_directory(source, destination)
 }
 
 #[cfg(unix)]

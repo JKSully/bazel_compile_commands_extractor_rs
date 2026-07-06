@@ -1,4 +1,5 @@
 use bazel_compile_commands_extractor::convert_compile_commands;
+use bazel_compile_commands_extractor::external_workspace_source;
 use bazel_compile_commands_extractor::parse_args;
 use bazel_compile_commands_extractor::AqueryOutput;
 use bazel_compile_commands_extractor::ExcludeHeaders;
@@ -70,6 +71,14 @@ fn converts_aquery_compile_actions_to_compile_commands() {
     assert!(commands
         .iter()
         .all(|command| command.directory == "/workspace"));
+}
+
+#[test]
+fn resolves_external_workspace_source_from_bazel_output_base() {
+    assert_eq!(
+        external_workspace_source("/home/user/.cache/bazel/output-base\n"),
+        Path::new("/home/user/.cache/bazel/output-base/external")
+    );
 }
 
 #[test]
