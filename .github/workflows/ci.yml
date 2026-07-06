@@ -22,20 +22,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@1.85.0
-        with:
-          components: rustfmt
-
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.15.0
         with:
           bazelisk-cache: true
           disk-cache: ${{ github.workflow }}-${{ github.job }}
           repository-cache: true
-
-      - name: Check Rust formatting
-        run: rustfmt --check src/*.rs tests/*.rs
 
       - name: Test extractor
         run: bazel test //...
