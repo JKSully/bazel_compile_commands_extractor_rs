@@ -5,3 +5,4 @@ rust-project.json
 /MODULE.bazel.lock
 /user.bazelrc
 /.rules_rust_analyzer
+/target

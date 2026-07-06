@@ -3,8 +3,8 @@
 version = 4
 
 [[package]]
-name = "direct-cargo-bazel-deps"
-version = "0.0.1"
+name = "bazel-compile-commands-extractor-rs"
+version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",

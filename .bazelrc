@@ -1,6 +1,10 @@
 # Enable platform-specific config groups (e.g., "build:linux", "build:macos").
 common --enable_platform_specific_config
 
+# Disable CPP toolchain detection.
+common --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+
 # Default to debug build.
 build --compilation_mode=dbg
 
@@ -12,14 +16,9 @@ build --test_output=errors
 build --test_summary=terse
 
 # Clippy
-build --aspects=@rules_rust//rust:defs.bzl%rust_clippy_aspect
-build --output_groups=+clippy_checks
-build --@rules_rust//rust/settings:clippy.toml=//:clippy.toml
-
-# Rust fmt
-# build --aspects=@rules_rust//rust:defs.bzl%rustfmt_aspect
-# build --output_groups=+rustfmt_checks
-
+build:clippy --aspects=@rules_rust//rust:defs.bzl%rust_clippy_aspect
+build:clippy --output_groups=+clippy_checks
+build:clippy --@rules_rust//rust/settings:clippy.toml=//:clippy.toml
 
 # Import user-specific configuration.
 try-import %workspace%/user.bazelrc

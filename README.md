@@ -59,8 +59,6 @@ Remaining deeper Hedron parity work includes platform-specific command patching 
 
 Provided are example C-family Bazel targets in `examples/` for testing.
 
-To update the `Cargo.bazel.lock` and `cargo-bazel-lock.json` file, run `bazel mod deps --lockfile_mode=update` and commit the changes. This is required as of `rules_rust` version `0.71.1` to use crate_universe across module boundaries.
-
 ### Examples
 
 - **examples/01-bzlmod**: a simple Bzlmod-based workspace with a single C++ target.

@@ -3,36 +3,34 @@ module(
     version = "0.0.0",
 )
 
-bazel_dep(name = "rules_rust", version = "0.71.2")
+bazel_dep(name = "rules_rs", version = "0.0.94")
+bazel_dep(name = "llvm", version = "0.8.11")
 
-RUST_EDITION="2024"
-RUST_VERSION="1.85.0"
-
-
-rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
-rust.toolchain(
-    edition = RUST_EDITION,
-    versions = [RUST_VERSION],
+toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
+toolchains.toolchain(
+    edition = "2024",
+    version = "1.85.0",
 )
-use_repo(rust, "rust_toolchains")
+use_repo(toolchains, "default_rust_toolchains")
+
+rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
+use_repo(rules_rust, "rules_rust")
 
 register_toolchains(
-    "@rust_toolchains//:all",
+    "@default_rust_toolchains//:all",
+    "@llvm//toolchain:all"
 )
 
-crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
 
-crate.spec(
-    package = "serde",
-    version = "1.0.228",
-    features = ["derive"],
-)
-crate.spec(
-    package = "serde_json",
-    version = "1.0.150",
-)
-crate.from_specs(
-    cargo_lockfile = "//:Cargo.bazel.lock",
-    lockfile = "//:cargo-bazel-lock.json",
+crate.from_cargo(
+    name = "crates",
+    cargo_lock = "//:Cargo.lock",
+    cargo_toml = "//:Cargo.toml",
+    platform_triples = [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+    ],
 )
 use_repo(crate, "crates")
