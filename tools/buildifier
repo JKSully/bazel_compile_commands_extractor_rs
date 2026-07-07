@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+set -eu
+
+mode="fix"
+if [ "${1:-}" = "--check" ]; then
+    mode="check"
+    shift
+fi
+
+workspace="${BUILD_WORKSPACE_DIRECTORY:-$(pwd)}"
+script_path="${TMPDIR:-/tmp}/bazel-compile-commands-extractor-rs-buildifier"
+bazel run --script_path="${script_path}" @buildifier_prebuilt//:buildifier >/dev/null
+
+if [ "$#" -eq 0 ]; then
+    exec "${script_path}" -mode="${mode}" -r "${workspace}"
+fi
+
+status=0
+for path in "$@"; do
+    case "${path}" in
+        /*) resolved_path="${path}" ;;
+        *) resolved_path="${workspace}/${path}" ;;
+    esac
+
+    "${script_path}" -mode="${mode}" "${resolved_path}" || status=$?
+done
+
+exit "${status}"

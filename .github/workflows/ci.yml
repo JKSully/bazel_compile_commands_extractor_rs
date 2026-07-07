@@ -29,6 +29,12 @@ jobs:
           disk-cache: ${{ github.workflow }}-${{ github.job }}
           repository-cache: true
 
+      - name: Check buildifier
+        run: tools/buildifier --check
+
+      - name: Check rustfmt
+        run: bazel build --config=rustfmt //...
+
       - name: Test extractor
         run: bazel test //...
 

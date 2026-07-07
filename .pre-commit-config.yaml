@@ -10,6 +10,14 @@ repos:
     hooks:
       - id: rustfmt
         name: rustfmt
-        entry: rustfmt
+        entry: bazel run @rules_rust//:rustfmt --
         language: system
+        pass_filenames: false
         types: [rust]
+
+      - id: buildifier
+        name: buildifier
+        entry: tools/buildifier
+        language: system
+        require_serial: true
+        files: (^|/)(BUILD|BUILD\.bazel|WORKSPACE|WORKSPACE\.bazel|MODULE\.bazel|.*\.bzl)$
