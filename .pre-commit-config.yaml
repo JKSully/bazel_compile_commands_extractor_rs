@@ -14,3 +14,10 @@ repos:
         language: system
         pass_filenames: false
         types: [rust]
+
+      - id: buildifier
+        name: buildifier
+        entry: tools/buildifier
+        language: system
+        require_serial: true
+        files: (^|/)(BUILD|BUILD\.bazel|WORKSPACE|WORKSPACE\.bazel|MODULE\.bazel|.*\.bzl)$

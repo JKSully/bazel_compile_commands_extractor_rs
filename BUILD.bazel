@@ -3,7 +3,10 @@ load("@rules_rs//rs:rust_library.bzl", "rust_library")
 load("@rules_rs//rs:rust_test.bzl", "rust_test")
 load(":refresh_compile_commands.bzl", "refresh_compile_commands")
 
-exports_files(["refresh_compile_commands.bzl", "clippy.toml"])
+exports_files([
+    "refresh_compile_commands.bzl",
+    "clippy.toml",
+])
 
 rust_library(
     name = "bazel_compile_commands_extractor",

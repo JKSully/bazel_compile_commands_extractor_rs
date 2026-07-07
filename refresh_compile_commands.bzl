@@ -4,8 +4,6 @@ This file exposes the public `refresh_compile_commands` macro and delegates the
 implementation to this repository's Rust binary.
 """
 
-
-
 def refresh_compile_commands(
         name,
         targets = None,

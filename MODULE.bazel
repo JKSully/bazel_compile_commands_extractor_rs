@@ -5,6 +5,7 @@ module(
 
 bazel_dep(name = "rules_rs", version = "0.0.94")
 bazel_dep(name = "llvm", version = "0.8.11")
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
 
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 toolchains.toolchain(
@@ -18,11 +19,10 @@ use_repo(rules_rust, "rules_rust")
 
 register_toolchains(
     "@default_rust_toolchains//:all",
-    "@llvm//toolchain:all"
+    "@llvm//toolchain:all",
 )
 
 crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
-
 crate.from_cargo(
     name = "crates",
     cargo_lock = "//:Cargo.lock",
