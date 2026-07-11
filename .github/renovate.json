@@ -11,9 +11,6 @@
     "cargo",
     "github-actions"
   ],
-  "bazel-module": {
-    "managerFilePatterns": ["/(^MODULE\\.bazel$|^examples/.*MODULE\\.bazel$)/"]
-  },
   "pre-commit": {
     "enabled": true
   }
