@@ -53,14 +53,8 @@ def _refresh_compile_commands_wrapper_impl(ctx):
     if ctx.attr.exclude_external_sources:
         arguments.append("--exclude_external_sources")
 
-    is_windows = ctx.target_platform_has_constraint(
-        ctx.attr._windows_constraint[platform_common.ConstraintValueInfo],
-    )
-    script = ctx.actions.declare_file(ctx.label.name + (".cmd" if is_windows else ""))
-    if is_windows:
-        content = _windows_launcher(ctx.executable._extractor.short_path, arguments)
-    else:
-        content = _posix_launcher(ctx.executable._extractor.short_path, arguments)
+    script = ctx.actions.declare_file(ctx.label.name)
+    content = _posix_launcher(ctx.executable._extractor.short_path, arguments)
 
     ctx.actions.write(
         output = script,
@@ -90,30 +84,6 @@ def _posix_launcher(extractor_short_path, arguments):
         "",
     ])
 
-def _windows_launcher(extractor_short_path, arguments):
-    extractor_path = extractor_short_path.replace("/", "\\")
-    return "\r\n".join([
-        "@echo off",
-        "setlocal DisableDelayedExpansion",
-        "set \"runfiles_dir=%RUNFILES_DIR%\"",
-        "if defined runfiles_dir goto find_extractor",
-        "set \"runfiles_dir=%~f0.runfiles\"",
-        ":find_extractor",
-        "set \"extractor=%runfiles_dir%\\{}\"".format(extractor_path),
-        "if exist \"%extractor%\" goto run_extractor",
-        "set \"extractor=%runfiles_dir%\\_main\\{}\"".format(extractor_path),
-        "if exist \"%extractor%\" goto run_extractor",
-        "echo Could not locate compile_commands_extractor in Bazel runfiles. 1>&2",
-        "exit /b 1",
-        ":run_extractor",
-        "\"%extractor%\" {} -- %*".format(" ".join([_windows_quote(argument) for argument in arguments])),
-        "exit /b %ERRORLEVEL%",
-        "",
-    ])
-
-def _windows_quote(argument):
-    return "\"{}\"".format(argument.replace("%", "%%").replace("\"", "\\\""))
-
 _refresh_compile_commands_wrapper = rule(
     executable = True,
     attrs = {
@@ -124,9 +94,6 @@ _refresh_compile_commands_wrapper = rule(
             executable = True,
             cfg = "exec",
             default = Label("//:compile_commands_extractor"),
-        ),
-        "_windows_constraint": attr.label(
-            default = Label("@platforms//os:windows"),
         ),
     },
     implementation = _refresh_compile_commands_wrapper_impl,

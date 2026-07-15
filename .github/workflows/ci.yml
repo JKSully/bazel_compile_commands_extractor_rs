@@ -23,7 +23,6 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
-          - windows-latest
 
     steps:
       - name: Check out repository
@@ -37,7 +36,6 @@ jobs:
           repository-cache: true
 
       - name: Check buildifier
-        if: runner.os != 'Windows'
         run: tools/buildifier --check
 
       - name: Check rustfmt

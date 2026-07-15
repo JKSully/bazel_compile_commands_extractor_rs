@@ -37,17 +37,6 @@ rust_test(
     ],
 )
 
-platform(
-    name = "windows_platform",
-    constraint_values = [
-        "@llvm//constraints/windows/abi:gnullvm",
-        "@llvm//constraints/windows/crt:msvcrt",
-        "@platforms//cpu:x86_64",
-        "@platforms//os:windows",
-    ],
-    visibility = ["//visibility:private"],
-)
-
 refresh_compile_commands(
     name = "refresh_all",
 )
