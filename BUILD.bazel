@@ -37,6 +37,12 @@ rust_test(
     ],
 )
 
+platform(
+    name = "windows_platform",
+    constraint_values = ["@platforms//os:windows"],
+    visibility = ["//visibility:private"],
+)
+
 refresh_compile_commands(
     name = "refresh_all",
 )

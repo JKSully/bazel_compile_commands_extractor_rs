@@ -43,7 +43,6 @@ def refresh_compile_commands(
     )
 
 def _refresh_compile_commands_wrapper_impl(ctx):
-    script = ctx.outputs.executable
     arguments = []
     for target, flags in ctx.attr.labels_to_flags.items():
         arguments.extend(["--target", "{}={}".format(target, flags)])
@@ -54,33 +53,66 @@ def _refresh_compile_commands_wrapper_impl(ctx):
     if ctx.attr.exclude_external_sources:
         arguments.append("--exclude_external_sources")
 
+    is_windows = ctx.target_platform_has_constraint(
+        ctx.attr._windows_constraint[platform_common.ConstraintValueInfo],
+    )
+    script = ctx.actions.declare_file(ctx.label.name + (".cmd" if is_windows else ""))
+    if is_windows:
+        content = _windows_launcher(ctx.executable._extractor.short_path, arguments)
+    else:
+        content = _posix_launcher(ctx.executable._extractor.short_path, arguments)
+
     ctx.actions.write(
         output = script,
         is_executable = True,
-        content = "\n".join([
-            "#!/usr/bin/env bash",
-            "set -euo pipefail",
-            "runfiles_dir=\"${RUNFILES_DIR:-${0}.runfiles}\"",
-            "extractor=\"${{runfiles_dir}}/{}\"".format(ctx.executable._extractor.short_path),
-            "if [[ ! -x \"${extractor}\" ]]; then",
-            "  extractor=\"${{runfiles_dir}}/_main/{}\"".format(ctx.executable._extractor.short_path),
-            "fi",
-            "if [[ ! -x \"${extractor}\" ]]; then",
-            "  extractor=\"$(find \"${runfiles_dir}\" -type f -name compile_commands_extractor -perm -111 2>/dev/null | sort | head -n 1)\"",
-            "fi",
-            "if [[ ! -x \"${extractor}\" ]]; then",
-            "  echo 'Could not locate compile_commands_extractor in Bazel runfiles.' >&2",
-            "  exit 1",
-            "fi",
-            "exec \"${{extractor}}\" {} -- \"$@\"".format(" ".join([repr(argument) for argument in arguments])),
-            "",
-        ]),
+        content = content,
     )
     return DefaultInfo(
         executable = script,
         files = depset([script]),
         runfiles = ctx.runfiles(files = [ctx.executable._extractor]),
     )
+
+def _posix_launcher(extractor_short_path, arguments):
+    return "\n".join([
+        "#!/bin/sh",
+        "set -eu",
+        "runfiles_dir=\"${RUNFILES_DIR:-${0}.runfiles}\"",
+        "extractor=\"${{runfiles_dir}}/{}\"".format(extractor_short_path),
+        "if [ ! -x \"${extractor}\" ]; then",
+        "  extractor=\"${{runfiles_dir}}/_main/{}\"".format(extractor_short_path),
+        "fi",
+        "if [ ! -x \"${extractor}\" ]; then",
+        "  echo 'Could not locate compile_commands_extractor in Bazel runfiles.' >&2",
+        "  exit 1",
+        "fi",
+        "exec \"${{extractor}}\" {} -- \"$@\"".format(" ".join([repr(argument) for argument in arguments])),
+        "",
+    ])
+
+def _windows_launcher(extractor_short_path, arguments):
+    extractor_path = extractor_short_path.replace("/", "\\")
+    return "\r\n".join([
+        "@echo off",
+        "setlocal DisableDelayedExpansion",
+        "set \"runfiles_dir=%RUNFILES_DIR%\"",
+        "if defined runfiles_dir goto find_extractor",
+        "set \"runfiles_dir=%~f0.runfiles\"",
+        ":find_extractor",
+        "set \"extractor=%runfiles_dir%\\{}\"".format(extractor_path),
+        "if exist \"%extractor%\" goto run_extractor",
+        "set \"extractor=%runfiles_dir%\\_main\\{}\"".format(extractor_path),
+        "if exist \"%extractor%\" goto run_extractor",
+        "echo Could not locate compile_commands_extractor in Bazel runfiles. 1>&2",
+        "exit /b 1",
+        ":run_extractor",
+        "\"%extractor%\" {} -- %*".format(" ".join([_windows_quote(argument) for argument in arguments])),
+        "exit /b %ERRORLEVEL%",
+        "",
+    ])
+
+def _windows_quote(argument):
+    return "\"{}\"".format(argument.replace("%", "%%").replace("\"", "\\\""))
 
 _refresh_compile_commands_wrapper = rule(
     executable = True,
@@ -92,6 +124,9 @@ _refresh_compile_commands_wrapper = rule(
             executable = True,
             cfg = "exec",
             default = Label("//:compile_commands_extractor"),
+        ),
+        "_windows_constraint": attr.label(
+            default = Label("@platforms//os:windows"),
         ),
     },
     implementation = _refresh_compile_commands_wrapper_impl,

@@ -51,7 +51,12 @@ This is a base implementation intended to preserve Hedron's top-level shape firs
 - `bazel aquery` extraction with `Cpp`, `Objc`, and `Cuda` compile mnemonics,
 - `compile_commands.json` entries using `arguments`, `file`, and `directory`,
 - one emitted entry per header, and
-- `exclude_headers` / `exclude_external_sources` filtering.
+- `exclude_headers` / `exclude_external_sources` filtering, and
+- portable launchers: POSIX `/bin/sh` on Linux and macOS, and `cmd.exe` on Windows.
+
+### Platform support
+
+The generated `refresh_compile_commands` target does not require Bash: it uses a POSIX-shell launcher on Linux and macOS and a native `.cmd` launcher on Windows. On every platform, `bazel` must be available on `PATH` when the target runs.
 
 Remaining deeper Hedron parity work includes platform-specific command patching (Apple, Emscripten, NVCC, MSVC), dependency-file based header discovery, param-file spillover behavior, and the exact runfiles behavior across all Bazel versions/platforms.
 
