@@ -43,7 +43,6 @@ def refresh_compile_commands(
     )
 
 def _refresh_compile_commands_wrapper_impl(ctx):
-    script = ctx.outputs.executable
     arguments = []
     for target, flags in ctx.attr.labels_to_flags.items():
         arguments.extend(["--target", "{}={}".format(target, flags)])
@@ -54,33 +53,36 @@ def _refresh_compile_commands_wrapper_impl(ctx):
     if ctx.attr.exclude_external_sources:
         arguments.append("--exclude_external_sources")
 
+    script = ctx.actions.declare_file(ctx.label.name)
+    content = _posix_launcher(ctx.executable._extractor.short_path, arguments)
+
     ctx.actions.write(
         output = script,
         is_executable = True,
-        content = "\n".join([
-            "#!/usr/bin/env bash",
-            "set -euo pipefail",
-            "runfiles_dir=\"${RUNFILES_DIR:-${0}.runfiles}\"",
-            "extractor=\"${{runfiles_dir}}/{}\"".format(ctx.executable._extractor.short_path),
-            "if [[ ! -x \"${extractor}\" ]]; then",
-            "  extractor=\"${{runfiles_dir}}/_main/{}\"".format(ctx.executable._extractor.short_path),
-            "fi",
-            "if [[ ! -x \"${extractor}\" ]]; then",
-            "  extractor=\"$(find \"${runfiles_dir}\" -type f -name compile_commands_extractor -perm -111 2>/dev/null | sort | head -n 1)\"",
-            "fi",
-            "if [[ ! -x \"${extractor}\" ]]; then",
-            "  echo 'Could not locate compile_commands_extractor in Bazel runfiles.' >&2",
-            "  exit 1",
-            "fi",
-            "exec \"${{extractor}}\" {} -- \"$@\"".format(" ".join([repr(argument) for argument in arguments])),
-            "",
-        ]),
+        content = content,
     )
     return DefaultInfo(
         executable = script,
         files = depset([script]),
         runfiles = ctx.runfiles(files = [ctx.executable._extractor]),
     )
+
+def _posix_launcher(extractor_short_path, arguments):
+    return "\n".join([
+        "#!/bin/sh",
+        "set -eu",
+        "runfiles_dir=\"${RUNFILES_DIR:-${0}.runfiles}\"",
+        "extractor=\"${{runfiles_dir}}/{}\"".format(extractor_short_path),
+        "if [ ! -x \"${extractor}\" ]; then",
+        "  extractor=\"${{runfiles_dir}}/_main/{}\"".format(extractor_short_path),
+        "fi",
+        "if [ ! -x \"${extractor}\" ]; then",
+        "  echo 'Could not locate compile_commands_extractor in Bazel runfiles.' >&2",
+        "  exit 1",
+        "fi",
+        "exec \"${{extractor}}\" {} -- \"$@\"".format(" ".join([repr(argument) for argument in arguments])),
+        "",
+    ])
 
 _refresh_compile_commands_wrapper = rule(
     executable = True,
