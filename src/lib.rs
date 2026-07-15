@@ -606,12 +606,12 @@ fn symlink_directory(source: &Path, destination: &Path) -> Result<(), ExtractorE
 
 #[cfg(windows)]
 fn symlink_directory(source: &Path, destination: &Path) -> Result<(), ExtractorError> {
-    std::os::windows::fs::symlink_dir(source, destination).map_err(|source| ExtractorError::Io {
+    std::os::windows::fs::symlink_dir(source, destination).map_err(|error| ExtractorError::Io {
         context: format!(
             "failed to symlink {} to {}",
             destination.display(),
             source.display()
         ),
-        source,
+        source: error,
     })
 }
