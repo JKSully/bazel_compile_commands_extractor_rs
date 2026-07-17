@@ -1,7 +1,8 @@
 [package]
 name = "bazel-compile-commands-extractor-rs"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2024"
+license = "MIT"
 
 [dependencies]
 serde = { version = "1.0.228", features = ["derive"] }
