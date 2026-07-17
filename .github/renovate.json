@@ -3,7 +3,7 @@
   "extends": ["config:recommended"],
   "automerge": false,
   "timezone": "America/New_York",
-  "schedule": ["* 0-9 * * 3"], // every wednesday before 9am
+  "schedule": ["* 0-9 * * 1"], // every monday before 9am
   "enabledManagers": [
     "bazelisk",
     "bazel-module",
@@ -11,6 +11,10 @@
     "cargo",
     "github-actions"
   ],
+  "cargo": {
+    "rangeStrategy": "update-lockfile",
+    "managerFilePatterns": ["/(^|/)Cargo\\.toml$/"]
+  },
   "pre-commit": {
     "enabled": true
   }
