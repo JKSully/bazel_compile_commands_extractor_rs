@@ -1,13 +1,13 @@
 {
-  "lsp": {
-    "rust-analyzer": {
-      "initialization_options": {
-        "cargo": {
-          "extraEnv": {
-            "RUSTUP_TOOLCHAIN": "1.85.0",
-          },
-        },
-      },
-    },
-  },
+    "lsp": {
+        "rust-analyzer": {
+            "initialization_options": {
+                "cargo": {
+                    "extraEnv": {
+                        "RUSTUP_TOOLCHAIN": "1.97.1"
+                    }
+                }
+            }
+        }
+    }
 }
