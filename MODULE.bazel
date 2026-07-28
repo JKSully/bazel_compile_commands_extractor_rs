@@ -11,7 +11,7 @@ bazel_dep(name = "package_metadata", version = "0.0.13")
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 toolchains.toolchain(
     edition = "2024",
-    version = "1.85.0",
+    version = "1.97.1",
 )
 use_repo(toolchains, "default_rust_toolchains")
 
