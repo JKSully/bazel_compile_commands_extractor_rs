@@ -32,7 +32,14 @@ fn generates_compile_commands_from_a_real_bazel_workspace() -> Result<(), Box<dy
         .arg(format!("--output_base={}", output_base.display()))
         .args(["run", "//:refresh_compile_commands"])
         .current_dir(&fixture_root)
-        .output()?;
+        .output()
+        .map_err(|error| {
+            format!(
+                "failed to launch nested Bazel from {} using PATH={:?}: {error}",
+                fixture_root.display(),
+                env::var_os("PATH"),
+            )
+        })?;
 
     if !output.status.success() {
         return Err(format!(
