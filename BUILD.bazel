@@ -64,6 +64,7 @@ rust_test(
 
 rust_test(
     name = "bazel_e2e_test",
+    size = "large",
     srcs = ["tests/bazel_e2e_test.rs"],
     crate_root = "tests/bazel_e2e_test.rs",
     data = [
@@ -76,7 +77,6 @@ rust_test(
         "//tests/fixtures/bzlmod:e2e_fixture_files",
     ] + glob(["src/**"]),
     deps = ["@crates//:serde_json"],
-    size = "large",
 )
 
 refresh_compile_commands(
