@@ -14,6 +14,7 @@ build --strip=never
 # Default test options.
 build --test_output=errors
 build --test_summary=terse
+test --test_env=PATH
 
 # Clippy
 build:clippy --aspects=@rules_rust//rust:defs.bzl%rust_clippy_aspect
