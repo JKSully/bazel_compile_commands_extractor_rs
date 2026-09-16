@@ -47,7 +47,13 @@ fn generates_compile_commands_from_a_real_bazel_workspace() -> Result<(), Box<dy
     let compile_commands =
         serde_json::from_slice::<Vec<Value>>(&fs::read(&compile_commands_path)?)?;
 
-    assert!(!compile_commands.is_empty());
+    if compile_commands.len() != 1 {
+        return Err(format!(
+            "expected one compile command, found {}",
+            compile_commands.len(),
+        )
+        .into());
+    }
     assert_has_compile_command(&compile_commands, "src/hello.cc", &fixture_root)?;
 
     Ok(())

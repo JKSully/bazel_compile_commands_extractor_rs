@@ -76,6 +76,7 @@ rust_test(
         "//tests/fixtures/bzlmod:e2e_fixture_files",
     ] + glob(["src/**"]),
     deps = ["@crates//:serde_json"],
+    size = "large",
 )
 
 refresh_compile_commands(
