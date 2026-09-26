@@ -3,7 +3,7 @@ module(
     version = "0.0.0",
 )
 
-bazel_dep(name = "rules_rs", version = "0.0.110")
+bazel_dep(name = "rules_rs", version = "0.0.112")
 bazel_dep(name = "llvm", version = "0.8.19")
 bazel_dep(name = "buildifier_prebuilt", version = "10.1.0")
 bazel_dep(name = "package_metadata", version = "0.0.13")
