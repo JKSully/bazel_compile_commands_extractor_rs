@@ -1,0 +1,10 @@
+filegroup(
+    name = "e2e_fixture_files",
+    srcs = [
+        ".bazelrc",
+        ".bazelversion",
+        "BUILD.fixture",
+        "MODULE.bazel",
+    ] + glob(["src/**"]),
+    visibility = ["//visibility:public"],
+)

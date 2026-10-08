@@ -62,6 +62,24 @@ rust_test(
     ],
 )
 
+rust_test(
+    name = "bazel_e2e_test",
+    size = "large",
+    srcs = ["tests/bazel_e2e_test.rs"],
+    crate_root = "tests/bazel_e2e_test.rs",
+    data = [
+        ":BUILD.bazel",
+        ":Cargo.lock",
+        ":Cargo.toml",
+        ":LICENSE",
+        ":MODULE.bazel",
+        ":refresh_compile_commands.bzl",
+        "//tests/fixtures/bzlmod:e2e_fixture_files",
+    ] + glob(["src/**"]),
+    tags = ["no-sandbox"],
+    deps = ["@crates//:serde_json"],
+)
+
 refresh_compile_commands(
     name = "refresh_all",
 )
