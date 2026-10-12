@@ -25,7 +25,7 @@ register_toolchains(
 
 crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
 crate.from_cargo(
-    name = "crates",
+    name = "bazel_compile_commands_extractor_crates",
     cargo_lock = "//:Cargo.lock",
     cargo_toml = "//:Cargo.toml",
     platform_triples = [
@@ -35,4 +35,4 @@ crate.from_cargo(
         "x86_64-unknown-linux-gnu",
     ],
 )
-use_repo(crate, "crates")
+use_repo(crate, "bazel_compile_commands_extractor_crates")
