@@ -73,7 +73,8 @@ rust_test(
         ":refresh_compile_commands.bzl",
         "//tests/fixtures/bzlmod:e2e_fixture_files",
     ] + glob(["src/**"]),
-    tags = ["no-sandbox"],
+    env_inherit = ["PATH"],
+    tags = ["local"],
     deps = all_crate_deps(normal = True),
 )
 
