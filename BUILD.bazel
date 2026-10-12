@@ -74,7 +74,7 @@ rust_test(
         "//tests/fixtures/bzlmod:e2e_fixture_files",
     ] + glob(["src/**"]),
     tags = ["no-sandbox"],
-    deps = ["@crates//:serde_json"],
+    deps = all_crate_deps(normal = True),
 )
 
 refresh_compile_commands(
