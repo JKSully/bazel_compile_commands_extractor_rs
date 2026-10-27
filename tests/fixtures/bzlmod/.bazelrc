@@ -1,0 +1,19 @@
+# Enable platform-specific config groups (e.g., "build:linux", "build:macos").
+common --enable_platform_specific_config
+
+# Default to debug build.
+build --compilation_mode=dbg
+
+# Disable stripping of debug symbols.
+build --strip=never
+
+# Default test options.
+build --test_output=errors
+build --test_summary=terse
+
+# Use C++17.
+build --cxxopt=-std=c++23
+build --host_cxxopt=-std=c++23
+
+# Import user-specific configuration.
+try-import %workspace%/user.bazelrc
